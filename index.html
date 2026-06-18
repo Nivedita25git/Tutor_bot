@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beacon — AI Learning Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#11142A;
+    --bg-soft:#161A38;
+    --surface:#1D2348;
+    --surface-raised:#252C58;
+    --line:#323A6E;
+    --amber:#F2A93B;
+    --amber-soft:#F2A93B22;
+    --green:#6FCF97;
+    --red:#E8736B;
+    --text:#F3F1EA;
+    --text-dim:#A6ABCF;
+    --text-faint:#6C72A0;
+    --radius:14px;
+    --display:'Fraunces', serif;
+    --body:'Inter', sans-serif;
+    --mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(ellipse 120% 80% at 30% -10%, #232B5A 0%, var(--bg) 55%);
+    color:var(--text);
+    font-family:var(--body);
+    min-height:100vh;
+    line-height:1.5;
+  }
+  a{color:var(--amber);}
+  button{font-family:var(--body);cursor:pointer;}
+  ::selection{background:var(--amber-soft);}
+
+  .app{display:flex;min-height:100vh;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:230px;
+    flex-shrink:0;
+    background:var(--bg-soft);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    padding:22px 16px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:0 6px 22px 6px;border-bottom:1px solid var(--line);margin-bottom:18px;}
+  .brand-mark{width:30px;height:30px;flex-shrink:0;}
+  .brand-name{font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:0.2px;}
+  .brand-sub{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:1.2px;margin-top:1px;}
+
+  .nav{display:flex;flex-direction:column;gap:3px;}
+  .nav-btn{
+    display:flex;align-items:center;gap:11px;
+    background:transparent;border:none;color:var(--text-dim);
+    padding:10px 12px;border-radius:10px;font-size:14.5px;font-weight:500;
+    text-align:left;transition:background .15s, color .15s;
+  }
+  .nav-btn svg{width:17px;height:17px;flex-shrink:0;opacity:.85;}
+  .nav-btn:hover{background:var(--surface);color:var(--text);}
+  .nav-btn.active{background:var(--amber-soft);color:var(--amber);}
+  .nav-btn.active svg{opacity:1;}
+
+  .sidebar-footer{margin-top:auto;padding-top:16px;border-top:1px solid var(--line);}
+  .profile-pill{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;background:var(--surface);}
+  .avatar-dot{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--amber),#E87A4F);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:12px;color:#14182B;flex-shrink:0;}
+  .profile-pill .ptext{font-size:12px;color:var(--text-dim);line-height:1.3;}
+  .profile-pill .ptext b{color:var(--text);font-weight:600;}
+
+  /* ---------- Main ---------- */
+  .main{flex:1;padding:30px 38px 50px;max-width:980px;}
+  .view{display:none;animation:fadeIn .25s ease;}
+  .view.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .page-head{margin-bottom:22px;}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);margin-bottom:8px;}
+  h1{font-family:var(--display);font-size:30px;font-weight:600;margin:0 0 6px;letter-spacing:-0.3px;}
+  .lede{color:var(--text-dim);font-size:14.5px;max-width:560px;margin:0;}
+
+  .controls-row{display:flex;gap:10px;margin:18px 0 26px;flex-wrap:wrap;}
+  .select-chip{position:relative;}
+  select{
+    appearance:none;background:var(--surface);border:1px solid var(--line);color:var(--text);
+    font-family:var(--body);font-size:13.5px;font-weight:500;padding:9px 32px 9px 14px;border-radius:9px;
+  }
+  .select-chip::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-faint);font-size:11px;pointer-events:none;}
+
+  /* ---------- Chat ---------- */
+  .lamp-hero{
+    border:1px solid var(--line);background:linear-gradient(160deg, var(--surface) 0%, var(--bg-soft) 100%);
+    border-radius:var(--radius);padding:22px 24px;display:flex;align-items:center;gap:18px;margin-bottom:20px;
+    position:relative;overflow:hidden;
+  }
+  .lamp-hero::before{content:'';position:absolute;top:-60px;right:-40px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle, var(--amber-soft) 0%, transparent 70%);}
+  .lamp-glow{width:46px;height:46px;flex-shrink:0;}
+  .lamp-hero p{margin:0;font-size:13.5px;color:var(--text-dim);position:relative;z-index:1;}
+  .lamp-hero strong{color:var(--text);}
+
+  .chat-window{
+    border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);
+    height:420px;display:flex;flex-direction:column;overflow:hidden;
+  }
+  .chat-log{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+  .msg{max-width:78%;padding:11px 14px;border-radius:12px;font-size:14px;line-height:1.55;white-space:pre-wrap;}
+  .msg.bot{align-self:flex-start;background:var(--bg-soft);border:1px solid var(--line);border-bottom-left-radius:3px;}
+  .msg.user{align-self:flex-end;background:var(--amber);color:#1A1100;border-bottom-right-radius:3px;font-weight:500;}
+  .msg.bot .tag{display:block;font-family:var(--mono);font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+  .typing{align-self:flex-start;display:flex;gap:4px;padding:4px 8px;}
+  .typing span{width:6px;height:6px;border-radius:50%;background:var(--text-faint);animation:bounce 1.1s infinite;}
+  .typing span:nth-child(2){animation-delay:.15s;} .typing span:nth-child(3){animation-delay:.3s;}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-4px);opacity:1;}}
+
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--line);background:var(--bg-soft);}
+  .qchip{background:var(--surface-raised);border:1px solid var(--line);color:var(--text-dim);font-size:12px;padding:6px 12px;border-radius:20px;transition:.15s;}
+  .qchip:hover{border-color:var(--amber);color:var(--amber);}
+
+  .chat-input-row{display:flex;gap:10px;padding:14px 16px;border-top:1px solid var(--line);}
+  .chat-input-row input{flex:1;background:var(--bg-soft);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:11px 14px;font-size:14px;font-family:var(--body);}
+  .chat-input-row input:focus{outline:none;border-color:var(--amber);}
+  .send-btn{background:var(--amber);border:none;color:#1A1100;font-weight:600;padding:0 20px;border-radius:9px;font-size:14px;}
+  .send-btn:hover{background:#FFC266;}
+
+  /* ---------- Quiz ---------- */
+  .quiz-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
+  .btn-primary{background:var(--amber);border:none;color:#1A1100;font-weight:600;padding:10px 18px;border-radius:9px;font-size:13.5px;}
+  .btn-primary:hover{background:#FFC266;}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text-dim);padding:10px 16px;border-radius:9px;font-size:13.5px;}
+  .btn-ghost:hover{border-color:var(--text-dim);color:var(--text);}
+
+  .qcard{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
+  .qcard .qnum{font-family:var(--mono);font-size:11px;color:var(--amber);margin-bottom:6px;}
+  .qcard .qtext{font-size:15px;font-weight:500;margin-bottom:12px;}
+  .opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;border:1px solid var(--line);margin-bottom:7px;font-size:13.5px;color:var(--text-dim);transition:.15s;}
+  .opt:hover{border-color:var(--text-dim);}
+  .opt input{accent-color:var(--amber);}
+  .opt.correct{border-color:var(--green);color:var(--green);background:#6FCF9714;}
+  .opt.incorrect{border-color:var(--red);color:var(--red);background:#E8736B14;}
+  .explain{font-size:12.5px;color:var(--text-faint);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);display:none;}
+  .explain.show{display:block;}
+
+  .score-banner{border:1px solid var(--green);background:#6FCF9714;border-radius:var(--radius);padding:18px 20px;margin-bottom:18px;display:none;}
+  .score-banner.show{display:block;}
+  .score-banner h3{margin:0 0 4px;font-family:var(--display);font-size:20px;color:var(--green);}
+  .score-banner p{margin:0;font-size:13px;color:var(--text-dim);}
+
+  /* ---------- Progress ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+  .stat-card{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:16px 18px;}
+  .stat-card .num{font-family:var(--display);font-size:28px;font-weight:600;color:var(--amber);}
+  .stat-card .lbl{font-size:11.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.8px;margin-top:3px;}
+
+  .constellation{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 26px;}
+  .star{width:15px;height:15px;opacity:.25;}
+  .star.lit{opacity:1;filter:drop-shadow(0 0 4px var(--amber));}
+
+  .history-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .history-table th{text-align:left;color:var(--text-faint);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.6px;padding:8px 12px;border-bottom:1px solid var(--line);}
+  .history-table td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--text-dim);}
+  .badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge.good{background:#6FCF9722;color:var(--green);}
+  .badge.mid{background:#F2A93B22;color:var(--amber);}
+  .badge.low{background:#E8736B22;color:var(--red);}
+  .empty-state{color:var(--text-faint);font-size:13.5px;padding:30px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius);}
+
+  /* ---------- Resources ---------- */
+  .res-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .res-card{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:8px;}
+  .res-type{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--amber);}
+  .res-title{font-weight:600;font-size:14.5px;}
+  .res-desc{font-size:12.5px;color:var(--text-dim);flex:1;}
+  .res-link{font-size:12.5px;font-weight:600;color:var(--amber);text-decoration:none;}
+
+  /* ---------- Settings ---------- */
+  .settings-card{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:22px 24px;max-width:540px;}
+  .settings-card label{display:block;font-size:12.5px;font-weight:600;color:var(--text-dim);margin-bottom:7px;}
+  .settings-card input[type=password],.settings-card input[type=text]{
+    width:100%;background:var(--bg-soft);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px 13px;font-size:13.5px;font-family:var(--mono);margin-bottom:14px;
+  }
+  .settings-card input:focus{outline:none;border-color:var(--amber);}
+  .mode-note{font-size:12.5px;color:var(--text-faint);background:var(--bg-soft);border-radius:9px;padding:12px 14px;margin-top:14px;border:1px solid var(--line);}
+  .status-line{font-size:12.5px;margin-top:10px;}
+  .status-line.on{color:var(--green);}
+  .status-line.off{color:var(--text-faint);}
+
+  @media(max-width:780px){
+    .app{flex-direction:column;}
+    .sidebar{width:100%;flex-direction:row;align-items:center;padding:14px 16px;overflow-x:auto;}
+    .brand{border-bottom:none;border-right:1px solid var(--line);margin-bottom:0;padding-right:14px;}
+    .nav{flex-direction:row;}
+    .sidebar-footer{display:none;}
+    .main{padding:22px 18px 40px;}
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .res-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none">
+        <path d="M16 3 L25 9 V17 C25 23 21 27 16 29 C11 27 7 23 7 17 V9 Z" stroke="#F2A93B" stroke-width="1.6" fill="#F2A93B22"/>
+        <circle cx="16" cy="15" r="3.4" fill="#F2A93B"/>
+      </svg>
+      <div>
+        <div class="brand-name">Beacon</div>
+        <div class="brand-sub">AI Learning Companion</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-tab="chat" onclick="switchTab('chat')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16v11H8l-4 4V5z"/></svg>
+        Tutor Chat
+      </button>
+      <button class="nav-btn" data-tab="quiz" onclick="switchTab('quiz')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 11l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        Practice Quiz
+      </button>
+      <button class="nav-btn" data-tab="progress" onclick="switchTab('progress')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19V11M11 19V5M18 19v-7"/></svg>
+        My Progress
+      </button>
+      <button class="nav-btn" data-tab="resources" onclick="switchTab('resources')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h11a3 3 0 013 3v12H7a3 3 0 01-3-3V5z"/></svg>
+        Resources
+      </button>
+      <button class="nav-btn" data-tab="settings" onclick="switchTab('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1.2l2-1.6-2-3.4-2.3.7a7 7 0 00-2-1.2L14 3h-4l-.6 2.3a7 7 0 00-2 1.2l-2.3-.7-2 3.4 2 1.6A7 7 0 005 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.3-.7a7 7 0 002 1.2L10 21h4l.6-2.3a7 7 0 002-1.2l2.3.7 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg>
+        Settings
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="profile-pill">
+        <div class="avatar-dot">S</div>
+        <div class="ptext"><b>Student demo</b><br>Grade 9 · Self-paced</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- CHAT TAB -->
+    <section class="view active" id="view-chat">
+      <div class="page-head">
+        <div class="eyebrow">SDG 4 · Quality Education</div>
+        <h1>Ask Beacon anything</h1>
+        <p class="lede">A personalized tutor that adapts explanations to your subject and level — built for learners who don't have a tutor at home.</p>
+      </div>
+
+      <div class="controls-row">
+        <div class="select-chip">
+          <select id="subjectSelect" onchange="onContextChange()">
+            <option>Mathematics</option>
+            <option>Science</option>
+            <option>English</option>
+            <option>Computer Science</option>
+          </select>
+        </div>
+        <div class="select-chip">
+          <select id="levelSelect" onchange="onContextChange()">
+            <option>Beginner</option>
+            <option selected>Intermediate</option>
+            <option>Advanced</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="lamp-hero">
+        <svg class="lamp-glow" viewBox="0 0 32 32" fill="none">
+          <path d="M16 3 L25 9 V17 C25 23 21 27 16 29 C11 27 7 23 7 17 V9 Z" stroke="#F2A93B" stroke-width="1.4" fill="#F2A93B18"/>
+          <circle cx="16" cy="15" r="3" fill="#F2A93B"/>
+        </svg>
+        <p>Beacon explains things at <strong id="heroLevel">Intermediate</strong> level for <strong id="heroSubject">Mathematics</strong> right now. Switch the dropdowns above any time — every answer, quiz and resource updates with it.</p>
+      </div>
+
+      <div class="chat-window">
+        <div class="chat-log" id="chatLog"></div>
+        <div class="chip-row" id="chipRow"></div>
+        <div class="chat-input-row">
+          <input id="chatInput" type="text" placeholder="Type a question, e.g. 'Explain how fractions work'" onkeydown="if(event.key==='Enter')sendMessage()">
+          <button class="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ TAB -->
+    <section class="view" id="view-quiz">
+      <div class="page-head">
+        <div class="eyebrow">Active recall</div>
+        <h1>Practice Quiz</h1>
+        <p class="lede">Five questions, generated for your current subject and level. Instant feedback helps you spot what to review next.</p>
+      </div>
+      <div class="quiz-toolbar">
+        <span style="font-size:13px;color:var(--text-dim);">Subject: <b id="quizSubjectLabel" style="color:var(--text)">Mathematics</b> · Level: <b id="quizLevelLabel" style="color:var(--text)">Intermediate</b></span>
+        <button class="btn-primary" onclick="generateQuiz()">Generate New Quiz</button>
+      </div>
+      <div class="score-banner" id="scoreBanner"><h3 id="scoreHeadline"></h3><p id="scoreSub"></p></div>
+      <div id="quizContainer"></div>
+      <button class="btn-primary" id="submitQuizBtn" style="display:none;" onclick="submitQuiz()">Submit Answers</button>
+    </section>
+
+    <!-- PROGRESS TAB -->
+    <section class="view" id="view-progress">
+      <div class="page-head">
+        <div class="eyebrow">Track what's working</div>
+        <h1>My Progress</h1>
+        <p class="lede">A quick view of how your practice is going — for you, or for a parent/teacher checking in.</p>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="num" id="statTotal">0</div><div class="lbl">Quizzes taken</div></div>
+        <div class="stat-card"><div class="num" id="statAvg">—</div><div class="lbl">Average score</div></div>
+        <div class="stat-card"><div class="num" id="statBest">—</div><div class="lbl">Strongest subject</div></div>
+        <div class="stat-card"><div class="num" id="statStreak">0</div><div class="lbl">Quizzes this session</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Session streak</div>
+      <div class="constellation" id="constellation"></div>
+      <div id="historyWrap"></div>
+    </section>
+
+    <!-- RESOURCES TAB -->
+    <section class="view" id="view-resources">
+      <div class="page-head">
+        <div class="eyebrow">Go deeper</div>
+        <h1>Recommended Resources</h1>
+        <p class="lede">Curated free resources for <strong id="resSubjectLabel">Mathematics</strong>, matched to where you are right now.</p>
+      </div>
+      <div class="res-grid" id="resGrid"></div>
+    </section>
+
+    <!-- SETTINGS TAB -->
+    <section class="view" id="view-settings">
+      <div class="page-head">
+        <div class="eyebrow">Optional</div>
+        <h1>Settings</h1>
+        <p class="lede">Beacon works fully offline with a built-in demo knowledge base. Add your own Anthropic API key for live, open-ended AI answers.</p>
+      </div>
+      <div class="settings-card">
+        <label for="apiKeyInput">Anthropic API key (optional)</label>
+        <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+        <button class="btn-primary" onclick="saveKey()">Save key for this session</button>
+        <button class="btn-ghost" onclick="clearKey()" style="margin-left:8px;">Clear</button>
+        <div class="status-line off" id="keyStatus">Currently running in offline demo mode.</div>
+        <div class="mode-note">
+          Your key is kept in memory only for this browser tab — it is never saved to disk, sent anywhere besides Anthropic's API, or written to localStorage. Refreshing the page clears it.
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ===================== STATE ===================== */
+let apiKey = "";
+let quizHistory = []; // {subject, level, score, total, time}
+let currentQuiz = [];
+let currentSubject = "Mathematics";
+let currentLevel = "Intermediate";
+
+/* ===================== KNOWLEDGE BASE (offline demo mode) ===================== */
+const KB = {
+  "Mathematics": {
+    keywords: {
+      "fraction": {
+        Beginner: "A fraction is just a way to show a part of a whole. If you cut a pizza into 4 equal slices and eat 1, you ate 1/4 of the pizza. The bottom number (4) is how many pieces the whole was cut into, and the top number (1) is how many you have.",
+        Intermediate: "A fraction a/b represents a divided into b equal parts. To add fractions, you need a common denominator: 1/4 + 1/2 = 1/4 + 2/4 = 3/4. To multiply, multiply across: 2/3 × 3/5 = 6/15, which simplifies to 2/5.",
+        Advanced: "Fractions form the rational numbers (Q), closed under addition, subtraction, multiplication, and division (except by zero). Operations rely on finding equivalent fractions via the least common multiple of denominators, and simplification uses the greatest common divisor of numerator and denominator."
+      },
+      "algebra": {
+        Beginner: "Algebra uses letters like x to stand for a missing number. If x + 2 = 5, you can figure out x by asking 'what plus 2 equals 5?' — the answer is 3.",
+        Intermediate: "To solve a linear equation like 3x + 7 = 22, isolate x: subtract 7 from both sides (3x = 15), then divide both sides by 3 (x = 5). Always do the same operation to both sides to keep the equation balanced.",
+        Advanced: "Linear equations of the form ax + b = c are solved by inverse operations, and this generalizes to systems of equations solved via substitution, elimination, or matrices. Understanding the structure (balance, inverse operations) transfers directly to solving for variables in physics and engineering formulas."
+      },
+      "pythagorean": {
+        Beginner: "The Pythagorean theorem helps you find a missing side of a right-angle triangle. The two short sides squared, added together, equal the long side (the hypotenuse) squared.",
+        Intermediate: "For a right triangle, a² + b² = c², where c is the hypotenuse. Example: if a=3 and b=4, then c² = 9+16=25, so c=5 — this is the famous 3-4-5 triangle.",
+        Advanced: "The Pythagorean theorem is a special case of the law of cosines when the angle is 90° (since cos 90° = 0). It generalizes to higher dimensions and underlies the Euclidean distance formula used throughout geometry, physics, and machine learning."
+      }
+    },
+    fallback: "I don't have that exact math topic in my offline demo bank yet. Try asking about fractions, algebra, or the Pythagorean theorem — or add an API key in Settings for unlimited topics."
+  },
+  "Science": {
+    keywords: {
+      "photosynthesis": {
+        Beginner: "Photosynthesis is how plants make their own food. They take in sunlight, water, and a gas called carbon dioxide, and turn it into sugar (food) and oxygen, which they release into the air.",
+        Intermediate: "Photosynthesis happens mainly in chloroplasts, using chlorophyll to capture sunlight. The equation is: 6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂. It happens in two stages: the light-dependent reactions and the Calvin cycle.",
+        Advanced: "In the light-dependent reactions, photosystems II and I capture photons to split water (photolysis), generating ATP and NADPH via the electron transport chain. These power the Calvin cycle in the stroma, where CO₂ is fixed into glucose through carbon fixation, reduction, and regeneration of RuBP."
+      },
+      "gravity": {
+        Beginner: "Gravity is the invisible pull that makes things fall down instead of floating away. It's why a dropped ball falls to the floor, and why we stay on the ground instead of drifting into space.",
+        Intermediate: "Gravity is a force of attraction between any two masses. Newton's law states F = G(m₁m₂)/r², meaning bigger masses pull harder, and the pull weakens quickly the farther apart objects are.",
+        Advanced: "Newtonian gravity works well for everyday scales, but Einstein's general relativity describes gravity as the curvature of spacetime caused by mass and energy — objects don't get 'pulled,' they follow the straightest possible path through curved spacetime, which explains phenomena like light bending near stars."
+      },
+      "cell": {
+        Beginner: "A cell is the tiny building block that all living things are made of — like bricks make up a wall. Some living things, like bacteria, are just one cell. You are made of trillions of them.",
+        Intermediate: "Cells contain a nucleus (control center holding DNA), mitochondria (energy production), and a cell membrane (boundary that controls what enters/exits). Plant cells additionally have a cell wall and chloroplasts.",
+        Advanced: "Eukaryotic cells compartmentalize functions into membrane-bound organelles, enabling specialization and efficient regulation of biochemical pathways. The endosymbiotic theory explains mitochondria and chloroplasts as once-independent prokaryotes incorporated into ancestral eukaryotic cells."
+      }
+    },
+    fallback: "That science topic isn't in my offline demo bank yet. Try photosynthesis, gravity, or cells — or connect an API key in Settings for open-ended answers."
+  },
+  "English": {
+    keywords: {
+      "past tense": {
+        Beginner: "Past tense means something already happened. Most verbs just add '-ed': 'walk' becomes 'walked'. But some are irregular, like 'go' becomes 'went', not 'goed'.",
+        Intermediate: "Regular verbs form past tense with -ed (play→played), but irregular verbs change form entirely (go→went, eat→ate, see→saw). There's also past continuous ('was walking') for ongoing past actions, and past perfect ('had walked') for actions completed before another past event.",
+        Advanced: "English past tense morphology splits into weak (regular, -ed suffix, derived historically from dental suffix) and strong (irregular, vowel-changing/ablaut, e.g. sing-sang-sung) verb classes. Aspect further refines meaning: simple past states a completed fact, past progressive frames an action in progress, and past perfect establishes relative time order between two past events."
+      },
+      "metaphor": {
+        Beginner: "A metaphor compares two things by saying one IS the other, without using 'like' or 'as'. 'Time is money' is a metaphor — time isn't literally money, but the comparison shows it's valuable.",
+        Intermediate: "Metaphors create meaning by mapping qualities from one concept (the source) onto another (the target): 'Her voice was music' maps the pleasantness of music onto a voice. This differs from a simile, which uses 'like' or 'as' to make the comparison explicit.",
+        Advanced: "Conceptual metaphor theory (Lakoff & Johnson) argues metaphor isn't just decorative language but structures everyday thought — e.g. 'ARGUMENT IS WAR' shapes how we talk about debate ('defend a position', 'win an argument'). Literary metaphors extend this cognitive mapping deliberately for aesthetic and rhetorical effect."
+      },
+      "essay": {
+        Beginner: "A good essay has three main parts: an introduction that tells the reader what you'll talk about, body paragraphs that explain your points with examples, and a conclusion that wraps it up.",
+        Intermediate: "A strong essay opens with a clear thesis statement, develops each body paragraph around one main idea supported by evidence, and uses transitions to connect ideas logically before closing with a conclusion that reinforces the thesis without simply repeating it.",
+        Advanced: "Effective essays build an argument through claim, evidence, and warrant (the reasoning connecting them), anticipate counterarguments to strengthen credibility, and maintain a consistent authorial voice and register suited to the intended audience and purpose."
+      }
+    },
+    fallback: "That topic isn't in my offline demo bank yet. Try past tense, metaphor, or essay structure — or connect an API key in Settings for unlimited topics."
+  },
+  "Computer Science": {
+    keywords: {
+      "variable": {
+        Beginner: "A variable is a labeled box that stores information so your program can use it later. If you write `score = 10`, you've created a box named 'score' holding the number 10.",
+        Intermediate: "Variables bind a name to a value in memory and can be reassigned: `score = 10; score = score + 5` updates score to 15. Variables have types (number, text, boolean) that determine what operations are valid on them.",
+        Advanced: "In most languages, a variable is a named reference to a memory location, and how that binding works (value semantics vs. reference semantics, mutability, scope, and lifetime) varies by language design and has real performance and correctness implications, especially in concurrent code."
+      },
+      "loop": {
+        Beginner: "A loop lets a computer repeat an action without you writing it over and over. A 'for' loop can print 'Hello' five times just by saying 'do this 5 times' instead of writing 'print Hello' five separate lines.",
+        Intermediate: "A `for` loop repeats a fixed number of times (or over a list), while a `while` loop repeats as long as a condition stays true. Choosing the right loop type, and avoiding infinite loops, is a core programming skill.",
+        Advanced: "Loop constructs trade off readability and control: `for` loops suit known iteration counts or iterable collections, `while` loops suit condition-driven termination, and recursion can replace iteration entirely at the cost of stack space — compilers often optimize tail-recursive calls back into loops."
+      },
+      "algorithm": {
+        Beginner: "An algorithm is just a step-by-step recipe for solving a problem. A recipe for making a sandwich is an algorithm — and so is the set of steps a computer follows to sort a list of numbers.",
+        Intermediate: "An algorithm's efficiency is described using Big-O notation, which estimates how its run time grows as input size grows. Bubble sort is O(n²) — slow for large lists — while merge sort is O(n log n), much faster at scale.",
+        Advanced: "Algorithm analysis considers both time and space complexity, best/average/worst-case behavior, and amortized cost for data structures like dynamic arrays. Choosing between algorithms (e.g. quicksort's average-case speed vs. mergesort's worst-case guarantees) often depends on the data's expected distribution and memory constraints."
+      }
+    },
+    fallback: "That CS topic isn't in my offline demo bank yet. Try variables, loops, or algorithms — or connect an API key in Settings for unlimited topics."
+  }
+};
+
+const SUGGESTED_QUESTIONS = {
+  "Mathematics": ["Explain fractions", "How do I solve an algebra equation?", "What is the Pythagorean theorem?"],
+  "Science": ["Explain photosynthesis", "What causes gravity?", "What is a cell?"],
+  "English": ["Explain past tense", "What is a metaphor?", "How do I structure an essay?"],
+  "Computer Science": ["What is a variable?", "Explain loops", "What is an algorithm?"]
+};
+
+const RESOURCES = {
+  "Mathematics": [
+    {type:"Practice", title:"Khan Academy — Math", desc:"Free structured courses from arithmetic through calculus, with practice exercises.", link:"https://www.khanacademy.org/math"},
+    {type:"Video", title:"3Blue1Brown", desc:"Visual, intuition-first explanations of mathematical concepts.", link:"https://www.3blue1brown.com/"},
+    {type:"Practice", title:"Brilliant.org", desc:"Interactive problem-solving courses in math and logic.", link:"https://brilliant.org/"},
+    {type:"Reference", title:"Desmos Graphing Calculator", desc:"Free graphing tool to visualize functions instantly.", link:"https://www.desmos.com/calculator"}
+  ],
+  "Science": [
+    {type:"Practice", title:"Khan Academy — Science", desc:"Biology, chemistry, and physics courses with built-in quizzes.", link:"https://www.khanacademy.org/science"},
+    {type:"Video", title:"CrashCourse", desc:"Fast-paced, engaging video series across all science subjects.", link:"https://thecrashcourse.com/"},
+    {type:"Reference", title:"PhET Interactive Simulations", desc:"Free interactive science simulations from the University of Colorado.", link:"https://phet.colorado.edu/"},
+    {type:"Article", title:"NASA Science", desc:"Real-world space and earth science content for students.", link:"https://science.nasa.gov/"}
+  ],
+  "English": [
+    {type:"Practice", title:"Khan Academy — Grammar", desc:"Grammar lessons and exercises covering tense, structure, and usage.", link:"https://www.khanacademy.org/humanities/grammar"},
+    {type:"Reference", title:"Purdue OWL Writing Lab", desc:"One of the most trusted free resources for essay writing and grammar.", link:"https://owl.purdue.edu/"},
+    {type:"Practice", title:"ReadWriteThink", desc:"Free literacy resources and interactive writing tools.", link:"https://www.readwritethink.org/"},
+    {type:"Reference", title:"Merriam-Webster", desc:"Dictionary and usage notes for vocabulary building.", link:"https://www.merriam-webster.com/"}
+  ],
+  "Computer Science": [
+    {type:"Practice", title:"freeCodeCamp", desc:"Free, project-based coding curriculum with certifications.", link:"https://www.freecodecamp.org/"},
+    {type:"Video", title:"CS50 (Harvard)", desc:"Harvard's introductory computer science course, free online.", link:"https://cs50.harvard.edu/x/"},
+    {type:"Practice", title:"Codecademy", desc:"Interactive, in-browser coding lessons for beginners.", link:"https://www.codecademy.com/"},
+    {type:"Reference", title:"MDN Web Docs", desc:"The standard reference for web programming languages.", link:"https://developer.mozilla.org/"}
+  ]
+};
+
+const QUIZ_BANK = {
+  "Mathematics": [
+    {q:"What is 3/4 + 1/4?", opts:["1/2","1","4/8","1/4"], correct:1, exp:"3/4 + 1/4 = 4/4, which simplifies to 1 whole."},
+    {q:"Solve for x: 2x + 3 = 11", opts:["x=4","x=7","x=5.5","x=8"], correct:0, exp:"Subtract 3 from both sides (2x=8), then divide by 2 (x=4)."},
+    {q:"In a right triangle with legs 6 and 8, what is the hypotenuse?", opts:["10","12","14","9"], correct:0, exp:"6² + 8² = 36+64 = 100, and √100 = 10."},
+    {q:"What is the simplified form of 4/8?", opts:["1/2","2/4","1/4","4/4"], correct:0, exp:"Dividing numerator and denominator by 4 gives 1/2."},
+    {q:"Which number is irrational?", opts:["0.5","√2","3/4","7"], correct:1, exp:"√2 cannot be written as an exact fraction; its decimal never repeats or terminates."},
+    {q:"What is the value of x in x - 5 = 12?", opts:["7","17","-7","-17"], correct:1, exp:"Add 5 to both sides: x = 17."}
+  ],
+  "Science": [
+    {q:"What gas do plants release during photosynthesis?", opts:["Carbon dioxide","Oxygen","Nitrogen","Hydrogen"], correct:1, exp:"Plants take in CO₂ and release O₂ as a byproduct of photosynthesis."},
+    {q:"What part of the cell contains the DNA?", opts:["Mitochondria","Cell membrane","Nucleus","Cytoplasm"], correct:2, exp:"The nucleus houses the cell's genetic material."},
+    {q:"What force keeps planets in orbit around the sun?", opts:["Magnetism","Friction","Gravity","Air pressure"], correct:2, exp:"Gravity pulls planets toward the sun, balancing their forward motion into an orbit."},
+    {q:"Which organelle produces energy for the cell?", opts:["Nucleus","Mitochondria","Ribosome","Vacuole"], correct:1, exp:"Mitochondria convert nutrients into usable energy (ATP)."},
+    {q:"Water boils at what temperature at sea level (Celsius)?", opts:["90°C","100°C","80°C","120°C"], correct:1, exp:"At standard atmospheric pressure, water boils at 100°C."},
+    {q:"What is the basic unit of all living things?", opts:["Atom","Tissue","Cell","Organ"], correct:2, exp:"All living organisms are made up of one or more cells."}
+  ],
+  "English": [
+    {q:"Which sentence uses correct past tense?", opts:["She goed to school","She go to school","She went to school","She going to school"], correct:2, exp:"'Go' is irregular — its past tense is 'went', not 'goed'."},
+    {q:"\"Time is a thief\" is an example of a:", opts:["Simile","Metaphor","Alliteration","Onomatopoeia"], correct:1, exp:"It directly states one thing IS another without using 'like' or 'as', making it a metaphor."},
+    {q:"What should a strong thesis statement do?", opts:["List random facts","State the essay's main argument clearly","Ask a question","Be as vague as possible"], correct:1, exp:"A thesis statement should clearly state the essay's central argument or claim."},
+    {q:"Which word is a synonym for 'happy'?", opts:["Joyful","Furious","Tedious","Hollow"], correct:0, exp:"'Joyful' shares the same core meaning as 'happy'."},
+    {q:"Which sentence is in past perfect tense?", opts:["She walks home","She had walked home","She will walk home","She is walking home"], correct:1, exp:"'Had walked' shows an action completed before another past event — that's past perfect."},
+    {q:"What is the purpose of a conclusion paragraph?", opts:["Introduce new unrelated ideas","Repeat the introduction word-for-word","Reinforce the thesis and wrap up the argument","List references only"], correct:2, exp:"A conclusion should reinforce the main argument and bring the essay to a close, not introduce new ideas."}
+  ],
+  "Computer Science": [
+    {q:"What does a 'for' loop typically control?", opts:["File storage","Repeating a block of code a set number of times","Internet connection","Screen brightness"], correct:1, exp:"A for loop repeats an action a defined number of times or over a collection."},
+    {q:"What is a variable used for?", opts:["Storing and naming a value","Deleting files","Connecting to Wi-Fi","Drawing graphics only"], correct:0, exp:"Variables store values under a name so a program can use or change them later."},
+    {q:"What does Big-O notation describe?", opts:["The color of code","An algorithm's growth in time/space as input grows","The number of bugs in code","A type of variable"], correct:1, exp:"Big-O describes how an algorithm's resource use scales with input size."},
+    {q:"Which is an example of an algorithm?", opts:["A recipe with ordered steps","A random word","A blank page","A color"], correct:0, exp:"An algorithm is simply an ordered set of steps to solve a problem, like a recipe."},
+    {q:"What happens in an infinite loop?", opts:["The program repeats forever without stopping","The program finishes faster","The computer turns off","Nothing happens"], correct:0, exp:"An infinite loop never meets its stopping condition, so it repeats endlessly."},
+    {q:"Which sort algorithm is generally faster for large lists?", opts:["Bubble sort","Merge sort","Random sort","Manual sort"], correct:1, exp:"Merge sort runs in O(n log n) time, much faster than bubble sort's O(n²) for large inputs."}
+  ]
+};
+
+/* ===================== INIT ===================== */
+window.onload = function(){
+  renderChips();
+  pushBotMessage(`Hi! I'm Beacon, your AI study buddy. Pick a subject and level above, then ask me anything — or tap a suggested question below to get started.`);
+  renderResources();
+  renderProgress();
+};
+
+function switchTab(tab){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  document.querySelector(`.nav-btn[data-tab="${tab}"]`).classList.add('active');
+  if(tab==='progress') renderProgress();
+}
+
+function onContextChange(){
+  currentSubject = document.getElementById('subjectSelect').value;
+  currentLevel = document.getElementById('levelSelect').value;
+  document.getElementById('heroSubject').textContent = currentSubject;
+  document.getElementById('heroLevel').textContent = currentLevel;
+  document.getElementById('quizSubjectLabel').textContent = currentSubject;
+  document.getElementById('quizLevelLabel').textContent = currentLevel;
+  document.getElementById('resSubjectLabel').textContent = currentSubject;
+  renderChips();
+  renderResources();
+}
+
+function renderChips(){
+  const row = document.getElementById('chipRow');
+  row.innerHTML = '';
+  (SUGGESTED_QUESTIONS[currentSubject]||[]).forEach(q=>{
+    const c = document.createElement('button');
+    c.className = 'qchip';
+    c.textContent = q;
+    c.onclick = ()=>{ document.getElementById('chatInput').value = q; sendMessage(); };
+    row.appendChild(c);
+  });
+}
+
+/* ===================== CHAT ===================== */
+function pushBotMessage(text, tag){
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.innerHTML = (tag ? `<span class="tag">${tag}</span>` : '') + escapeHtml(text);
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+function pushUserMessage(text){
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.textContent = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function sendMessage(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  pushUserMessage(text);
+  input.value = '';
+
+  const log = document.getElementById('chatLog');
+  const typing = document.createElement('div');
+  typing.className = 'typing';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  log.appendChild(typing);
+  log.scrollTop = log.scrollHeight;
+
+  const reply = await getTutorReply(text);
+  typing.remove();
+  pushBotMessage(reply, `${currentSubject} · ${currentLevel}`);
+}
+
+async function getTutorReply(question){
+  if(apiKey){
+    try{
+      const res = await callClaude(
+        `You are Beacon, a friendly AI tutor for a ${currentLevel}-level student studying ${currentSubject}. Answer this question clearly, in 3-5 sentences, matched to that level: ${question}`
+      );
+      if(res) return res;
+    }catch(e){ /* fall through to offline demo */ }
+  }
+  return getOfflineReply(question);
+}
+
+function getOfflineReply(question){
+  const subjectKB = KB[currentSubject];
+  const lower = question.toLowerCase();
+  for(const key in subjectKB.keywords){
+    if(lower.includes(key)){
+      return subjectKB.keywords[key][currentLevel];
+    }
+  }
+  return subjectKB.fallback;
+}
+
+async function callClaude(prompt){
+  const headers = {"Content-Type":"application/json"};
+  if(apiKey){
+    headers["x-api-key"] = apiKey;
+    headers["anthropic-version"] = "2023-06-01";
+    headers["anthropic-dangerous-direct-browser-access"] = "true";
+  }
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 400,
+      messages: [{role:"user", content: prompt}]
+    })
+  });
+  if(!response.ok) throw new Error("API request failed");
+  const data = await response.json();
+  const block = data.content.find(b=>b.type==="text");
+  return block ? block.text : null;
+}
+
+/* ===================== QUIZ ===================== */
+function generateQuiz(){
+  const bank = [...QUIZ_BANK[currentSubject]];
+  // shuffle
+  for(let i=bank.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [bank[i],bank[j]] = [bank[j],bank[i]];
+  }
+  currentQuiz = bank.slice(0,5);
+  document.getElementById('scoreBanner').classList.remove('show');
+  renderQuiz();
+  document.getElementById('submitQuizBtn').style.display = 'inline-block';
+}
+
+function renderQuiz(){
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  currentQuiz.forEach((item, qi)=>{
+    const card = document.createElement('div');
+    card.className = 'qcard';
+    let optsHtml = '';
+    item.opts.forEach((opt, oi)=>{
+      optsHtml += `<label class="opt" id="opt-${qi}-${oi}">
+        <input type="radio" name="q${qi}" value="${oi}"> ${escapeHtml(opt)}
+      </label>`;
+    });
+    card.innerHTML = `
+      <div class="qnum">Question ${qi+1} of ${currentQuiz.length}</div>
+      <div class="qtext">${escapeHtml(item.q)}</div>
+      ${optsHtml}
+      <div class="explain" id="exp-${qi}">${escapeHtml(item.exp)}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function submitQuiz(){
+  let score = 0;
+  currentQuiz.forEach((item, qi)=>{
+    const selected = document.querySelector(`input[name="q${qi}"]:checked`);
+    const selVal = selected ? parseInt(selected.value) : -1;
+    for(let oi=0; oi<item.opts.length; oi++){
+      const el = document.getElementById(`opt-${qi}-${oi}`);
+      if(oi === item.correct) el.classList.add('correct');
+      else if(oi === selVal) el.classList.add('incorrect');
+    }
+    document.getElementById(`exp-${qi}`).classList.add('show');
+    if(selVal === item.correct) score++;
+  });
+
+  const total = currentQuiz.length;
+  quizHistory.push({subject: currentSubject, level: currentLevel, score, total, time: new Date()});
+
+  const banner = document.getElementById('scoreBanner');
+  document.getElementById('scoreHeadline').textContent = `You scored ${score} / ${total}`;
+  document.getElementById('scoreSub').textContent = score === total
+    ? "Perfect score! Try Advanced level or a new subject next."
+    : `Review the highlighted explanations above, then try again to push your score higher.`;
+  banner.classList.add('show');
+  document.getElementById('submitQuizBtn').style.display = 'none';
+}
+
+/* ===================== PROGRESS ===================== */
+function renderProgress(){
+  document.getElementById('statTotal').textContent = quizHistory.length;
+  if(quizHistory.length){
+    const avgPct = Math.round(100 * quizHistory.reduce((s,h)=>s+h.score/h.total,0) / quizHistory.length);
+    document.getElementById('statAvg').textContent = avgPct + '%';
+    const bySubject = {};
+    quizHistory.forEach(h=>{
+      bySubject[h.subject] = bySubject[h.subject] || {s:0,t:0};
+      bySubject[h.subject].s += h.score; bySubject[h.subject].t += h.total;
+    });
+    let best = null, bestPct = -1;
+    for(const s in bySubject){
+      const pct = bySubject[s].s / bySubject[s].t;
+      if(pct > bestPct){ bestPct = pct; best = s; }
+    }
+    document.getElementById('statBest').textContent = best || '—';
+  } else {
+    document.getElementById('statAvg').textContent = '—';
+    document.getElementById('statBest').textContent = '—';
+  }
+  document.getElementById('statStreak').textContent = quizHistory.length;
+
+  const constel = document.getElementById('constellation');
+  constel.innerHTML = '';
+  const totalStars = Math.max(quizHistory.length, 8);
+  for(let i=0;i<totalStars;i++){
+    const lit = i < quizHistory.length;
+    const s = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    s.setAttribute('viewBox','0 0 24 24');
+    s.setAttribute('class', 'star' + (lit ? ' lit' : ''));
+    s.innerHTML = `<path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.6 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" fill="${lit?'#F2A93B':'#6C72A0'}"/>`;
+    constel.appendChild(s);
+  }
+
+  const wrap = document.getElementById('historyWrap');
+  if(!quizHistory.length){
+    wrap.innerHTML = `<div class="empty-state">No quizzes yet — head to the Practice Quiz tab to take your first one.</div>`;
+    return;
+  }
+  let rows = '';
+  quizHistory.slice().reverse().forEach(h=>{
+    const pct = Math.round(100*h.score/h.total);
+    const badgeClass = pct>=80?'good':pct>=50?'mid':'low';
+    rows += `<tr>
+      <td>${h.time.toLocaleTimeString()}</td>
+      <td>${h.subject}</td>
+      <td>${h.level}</td>
+      <td>${h.score}/${h.total}</td>
+      <td><span class="badge ${badgeClass}">${pct}%</span></td>
+    </tr>`;
+  });
+  wrap.innerHTML = `<table class="history-table">
+    <thead><tr><th>Time</th><th>Subject</th><th>Level</th><th>Score</th><th>%</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+/* ===================== RESOURCES ===================== */
+function renderResources(){
+  const grid = document.getElementById('resGrid');
+  grid.innerHTML = '';
+  (RESOURCES[currentSubject]||[]).forEach(r=>{
+    const card = document.createElement('div');
+    card.className = 'res-card';
+    card.innerHTML = `
+      <div class="res-type">${r.type}</div>
+      <div class="res-title">${r.title}</div>
+      <div class="res-desc">${r.desc}</div>
+      <a class="res-link" href="${r.link}" target="_blank" rel="noopener">Visit resource →</a>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* ===================== SETTINGS ===================== */
+function saveKey(){
+  const val = document.getElementById('apiKeyInput').value.trim();
+  apiKey = val;
+  const status = document.getElementById('keyStatus');
+  if(val){
+    status.textContent = 'Live AI mode enabled for this session.';
+    status.className = 'status-line on';
+  } else {
+    status.textContent = 'Currently running in offline demo mode.';
+    status.className = 'status-line off';
+  }
+}
+function clearKey(){
+  apiKey = "";
+  document.getElementById('apiKeyInput').value = "";
+  const status = document.getElementById('keyStatus');
+  status.textContent = 'Currently running in offline demo mode.';
+  status.className = 'status-line off';
+}
+</script>
+</body>
+</html>
