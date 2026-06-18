@@ -3,7 +3,6 @@
 
 **SDG 4: Quality Education** — A personalized AI tutor chatbot built to help students who don't have access to a private tutor at home get clear, level-appropriate explanations, practice quizzes, and curated learning resources, anytime.
 
-> Live demo: open `index.html` in any browser. No installation, no build step, no server required.
 
 ---
 
@@ -45,23 +44,9 @@ This two-mode design means the project **works immediately for grading/demo purp
 | Fonts | Google Fonts (Fraunces, Inter, IBM Plex Mono) |
 | Optional AI | Anthropic Claude API (`claude-sonnet-4-6`) via direct browser fetch |
 
-No backend, database, or package installation is required — this was a deliberate choice so any student, teacher, or grader can run the project by double-clicking `index.html`.
-
-## 6. Running the Project
-
-1. Clone or download this repository.
-2. Open `index.html` in any modern browser (Chrome, Edge, Firefox, Safari).
-3. That's it — the demo knowledge base, quizzes, and resources work immediately.
-4. *(Optional)* To enable live AI chat: go to **Settings**, paste an Anthropic API key, click **Save key for this session**.
+`.
 
 
-## 8. Future Scope
-
-- Mobile app version (React Native / Flutter) for offline access without a laptop
-- Teacher dashboard to view aggregated student progress across a classroom
-- Speech-to-text input for younger learners or students with limited literacy
-- Multilingual support so the tutor can explain concepts in a student's first language
-- Adaptive difficulty that automatically adjusts level based on quiz performance
 - Persistent accounts (with a backend) so progress survives across devices and sessions
 
 
